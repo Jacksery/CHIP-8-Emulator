@@ -1,5 +1,5 @@
 #include "timer.h"
-#include <SDL2/SDL.h>
+#include <SDL.h>
 
 void updateTimers(Chip8 &chip8, Audio &audio, double &lastTimerUpdate, const double MS_PER_TIMER)
 {

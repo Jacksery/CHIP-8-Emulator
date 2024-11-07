@@ -1,7 +1,7 @@
 #ifndef AUDIO_H
 #define AUDIO_H
 
-#include <SDL2/SDL.h>
+#include <SDL.h>
 
 class Audio
 {
@@ -12,7 +12,8 @@ public:
     {
         SDL_PauseAudioDevice(audioDevice, 0);
     }
-    void stopBeep() {
+    void stopBeep()
+    {
         SDL_PauseAudioDevice(audioDevice, 1);
     }
 
