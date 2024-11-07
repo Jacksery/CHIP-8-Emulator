@@ -20,6 +20,12 @@ Chip8::Chip8()
 
 bool Chip8::loadROM(const char *filename)
 {
+    // Load fontset into memory
+    for (int i = 0; i < 80; i++)
+    {
+        memory[i] = chip8_fontset[i];
+    }
+
     // Open ROM file in binary mode
     std::ifstream file(filename, std::ios::binary | std::ios::ate);
     if (!file.is_open())
@@ -154,16 +160,19 @@ void Chip8::decodeOpcode(uint16_t opcode)
         case 0x0001:
             // Set V[x] to V[x] OR V[y]
             V[x] |= V[y];
+            V[0xF] = 0; // chip8 quirk
             break;
 
         case 0x0002:
             // Set V[x] to V[x] AND V[y]
             V[x] &= V[y];
+            V[0xF] = 0; // chip8 quirk
             break;
 
         case 0x0003:
             // Set V[x] to V[x] XOR V[y]
             V[x] ^= V[y];
+            V[0xF] = 0; // chip8 quirk
             break;
 
         case 0x0004:
@@ -189,9 +198,11 @@ void Chip8::decodeOpcode(uint16_t opcode)
         case 0x0006:
         {
             // Shift V[x] right by 1, set V[F] to the least significant bit
-            uint8_t vx = V[x];
+            V[x] = V[y];
+            uint8_t shifted_bit = V[x] & 0x1;
             V[x] >>= 1;
-            V[0xF] = vx & 0x1;
+            V[0xF] = shifted_bit;
+
             break;
         }
 
@@ -208,9 +219,10 @@ void Chip8::decodeOpcode(uint16_t opcode)
         case 0x000E:
         {
             // Shift V[x] left by 1, set V[F] to the most significant bit
-            uint8_t vx = V[x];
+            V[x] = V[y];
+            uint8_t shifted_bit = (V[x] >> 7) & 0x1;
             V[x] <<= 1;
-            V[0xF] = (vx >> 7) & 0x1;
+            V[0xF] = shifted_bit;
             break;
         }
         }
@@ -246,6 +258,10 @@ void Chip8::decodeOpcode(uint16_t opcode)
         uint8_t height = n;
         V[0xF] = 0;
 
+        // Sprite wraps if it goes entirely off the screen
+        bool wrapHorizontally = (xCoord >= 64);
+        bool wrapVertically = (yCoord >= 32);
+
         for (int row = 0; row < height; row++)
         {
             uint8_t pixel = memory[I + row];
@@ -253,7 +269,16 @@ void Chip8::decodeOpcode(uint16_t opcode)
             {
                 if (pixel & (0x80 >> col))
                 {
-                    uint16_t index = xCoord + col + ((yCoord + row) * 64);
+                    uint8_t x = (xCoord + col) % 64;
+                    uint8_t y = (yCoord + row) % 32;
+
+                    // Clip if the sprite is partially off the screen
+                    if (!wrapHorizontally && xCoord + col >= 64)
+                        continue;
+                    if (!wrapVertically && yCoord + row >= 32)
+                        continue;
+
+                    uint16_t index = x + (y * 64);
                     if (gfx[index] == 1)
                         V[0xF] = 1;
                     gfx[index] ^= 1;
@@ -346,6 +371,8 @@ void Chip8::decodeOpcode(uint16_t opcode)
             {
                 memory[I + i] = V[i];
             }
+            // Increase I by x + 1 (chip8 quirk)
+            I += x + 1;
             break;
 
         case 0x0065:
@@ -354,6 +381,8 @@ void Chip8::decodeOpcode(uint16_t opcode)
             {
                 V[i] = memory[I + i];
             }
+            // Increase I by x + 1 (chip8 quirk)
+            I += x + 1;
             break;
         }
         break;

@@ -75,6 +75,9 @@ int main(int argc, char *argv[])
         return 1;
     }
 
+    // Message box
+    SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_INFORMATION, "Chip-8 Emulator", "Drop a Chip-8 ROM file to start emulation", window);
+
     // Main loop, polls until a ROM is loaded
     runEmulatorLoop(chip8, audio, renderer, chip8.romLoaded);
 
