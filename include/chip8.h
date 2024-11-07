@@ -1,7 +1,7 @@
 #ifndef CHIP8_H
 #define CHIP8_H
 
-#include <SDL2/SDL.h>
+#include <SDL.h>
 #include <cstdint>
 #include <fstream>
 
